@@ -11,10 +11,10 @@
 #include "twm/graphics/components.hpp"
 #include "twm/graphics/basic_renderer.hpp"
 
-
-
 #include "twm/util/math.hpp"
 using namespace twm::operators;
+
+#include "prototype\prototype.hpp"
 
 namespace ASPX
 {
@@ -90,7 +90,7 @@ namespace ASPX
 			void SetSpawnRate( float rate ) { _birthRate = rate; }
 			void SetLifeSpan( float time ) { _particleLifeSpan = time; }
 
-			void CheckCollisions( float time, twm::Matrix pig_xform );
+			void CheckCollisions( float time, twm::Entity* pig_entity );
 
 			unsigned int _particle_quantity;
 

@@ -25,11 +25,10 @@ public:
 private:
 	twm::Timer _timer;
 	twm::Timer _frame_timer;
-	twm::Entity _pig_entity;
-	
+		
 	std::vector<ASPX::Particle::CParticle*> _particle;
 
-	std::vector<twm::Matrix> _pig_xform;
+	std::vector<twm::Entity> _pig_entity;
 
-	void CreateParticleSystems( twm::IWorldUpdate* world );
+	void CreateParticleSystems( twm::IWorldUpdate* world, twm::Entity pig_entity );
 };
