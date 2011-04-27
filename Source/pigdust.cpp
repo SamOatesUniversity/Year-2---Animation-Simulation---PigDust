@@ -46,10 +46,13 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 	const float deltatime = 0.001f * _frame_timer.GetTime();
 	_frame_timer.Reset();
 
-	twm::Matrix other_pig_xform;
+	//pig_id is a counter used to work out which set of 4 wheels to use and
+	//which pig entity to store in the pig_entity vector.
+	int pig_id = 0;
 
 	twm::EntityIterator pig_it = world->QueryEntitiesByType( kWartPig );
-	int pig_id = 0;
+	
+	//resize the pig_entity vector where needed.
 	if( _pig_entity.capacity() != pig_it.Count() ) 
 		_pig_entity.resize( pig_it.Count() );
 
@@ -62,9 +65,12 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 		const float pig_speed = pig_data.GetSpeed();
 		const float pig_acc = pig_data.GetAcceleration();
 
+		//if the number of particle systems is less then the number of pigs 
+		//times number of wheels (4) make particle systems.
 		if( _particle.size() < pig_it.Count() * 4 ) 
 			CreateParticleSystems( world, pig_entity );
 
+		//foreach particle system, update.
 		for( int i = 0 + ( 4 * pig_id ); i < 4 + ( 4 * pig_id ); i++ )
 		{
 			_particle[i]->SetEnabled( false );
@@ -91,6 +97,7 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 
 		}
 
+		//add the pig_entity to the storage vector.
 		if( pig_id < pig_it.Count() ) {
 			_pig_entity[pig_id] = pig_entity;
 		}
@@ -107,12 +114,15 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 		}
 	}
 
+	//update particle systems with new values
 	for( unsigned int i = 0; i < _particle.size(); i++ )
 		_particle[i]->Update( time, deltatime );
 }
 
 void PigDustService::CreateParticleSystems( twm::IWorldUpdate* world, twm::Entity pig_entity )
 {
+	//create four particle systems. one at each wheel.
+
 	twm::Entity particle_parent_r = pig_entity.CreateChild();
 	particle_parent_r.SetTransformation( particle_parent_r.GetLocalTransformation() 
 		* ASPX::Transformation::Rotate( 0.0f, 180.0f, 0.0f )
