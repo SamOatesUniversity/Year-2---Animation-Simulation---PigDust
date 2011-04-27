@@ -46,25 +46,24 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 	const float deltatime = 0.001f * _frame_timer.GetTime();
 	_frame_timer.Reset();
 
-	//twm::Entity terrain = world->GetEntity( 7 );
-	//twm::IndexedMeshShape terrain_component = terrain.GetComponent( twm::kIndexedMeshShape );	
-	//terrain.SetTransformation( ASPX::Transformation::Position( 0.0f, time, 0.0f ) );
-
 	twm::Matrix other_pig_xform;
 
 	twm::EntityIterator pig_it = world->QueryEntitiesByType( kWartPig );
 	int pig_id = 0;
+	if( _pig_entity.capacity() != pig_it.Count() ) 
+		_pig_entity.resize( pig_it.Count() );
+
 	while ( pig_it.HasNext() )
 	{
-		_pig_entity = pig_it.Next();
-		WartPigComponent pig_data = _pig_entity.GetComponent( kWartPig );
-		const twm::Matrix pig_xform = _pig_entity.GetWorldTransformation();
+		twm::Entity pig_entity = pig_it.Next();
+		WartPigComponent pig_data = pig_entity.GetComponent( kWartPig );
+		const twm::Matrix pig_xform = pig_entity.GetWorldTransformation();
 
 		const float pig_speed = pig_data.GetSpeed();
 		const float pig_acc = pig_data.GetAcceleration();
 
 		if( _particle.size() < pig_it.Count() * 4 ) 
-			CreateParticleSystems( world );
+			CreateParticleSystems( world, pig_entity );
 
 		for( int i = 0 + ( 4 * pig_id ); i < 4 + ( 4 * pig_id ); i++ )
 		{
@@ -74,48 +73,47 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 			if( pig_acc != 0.0f && ( pig_speed < 10.0f && pig_speed > -10.0f ) )
 			{
 				_particle[i]->SetEnabled( true );
-				_particle[i]->_particle_quantity = 16;
+				_particle[i]->_particle_quantity = 8;
 			}
 			//decelorating
 			else if( pig_acc == 0.0f && ( pig_speed >= 1.0f || pig_speed <= -1.0f ) )
 			{
 				_particle[i]->SetEnabled( true );
-				_particle[i]->_particle_quantity = pig_speed < 0.0f ? (int)(-pig_speed * 0.33f) : (int)(pig_speed * 0.33f);
+				_particle[i]->_particle_quantity = pig_speed < 0.0f ? (int)(-pig_speed * 0.1f) : (int)(pig_speed * 0.1f);
 			}
 			//at max speed
 			else if( pig_acc != 0.0f && ( pig_speed > 10.0f || pig_speed < -10.0f ) )
 			{
 				_particle[i]->SetEnabled( true );
-				float s = pig_data.GetSteeringAngle() < 0.0f ?  -pig_data.GetSteeringAngle() : pig_data.GetSteeringAngle();
-				_particle[i]->_particle_quantity = 10 + s;
+				float s = pig_data.GetSteeringAngle() < 0.0f ?  -pig_data.GetSteeringAngle() * 10.0f : pig_data.GetSteeringAngle() * 10.0f;
+				_particle[i]->_particle_quantity = (unsigned int)(4 + s);
 			}	
 
 		}
 
-		if( _pig_xform.size() < pig_it.Count() ) {
-			_pig_xform.push_back( pig_xform );
+		if( pig_id < pig_it.Count() ) {
+			_pig_entity[pig_id] = pig_entity;
 		}
 
 		pig_id++;
 	}
 
 	//Check collisions between particles and pig
-	for( UINT p = 0; p < _pig_xform.size(); p++ )
+	for( UINT p = 0; p < _pig_entity.size(); p++ )
 	{
 		for( unsigned int i = 0; i < _particle.size(); i++ )
-			_particle[i]->CheckCollisions( time, _pig_xform[p] );
+		{
+			_particle[i]->CheckCollisions( time, &_pig_entity[p] );
+		}
 	}
 
 	for( unsigned int i = 0; i < _particle.size(); i++ )
 		_particle[i]->Update( time, deltatime );
-
-	_pig_xform.clear();
-
 }
 
-void PigDustService::CreateParticleSystems( twm::IWorldUpdate* world )
+void PigDustService::CreateParticleSystems( twm::IWorldUpdate* world, twm::Entity pig_entity )
 {
-	twm::Entity particle_parent_r = _pig_entity.CreateChild();
+	twm::Entity particle_parent_r = pig_entity.CreateChild();
 	particle_parent_r.SetTransformation( particle_parent_r.GetLocalTransformation() 
 		* ASPX::Transformation::Rotate( 0.0f, 180.0f, 0.0f )
 		* ASPX::Transformation::Position( -1.1f, 0.2f, -2.2f ) );
@@ -126,7 +124,7 @@ void PigDustService::CreateParticleSystems( twm::IWorldUpdate* world )
 		_particle.push_back( new_particle_system );
 	}
 
-	twm::Entity particle_parent_l = _pig_entity.CreateChild();
+	twm::Entity particle_parent_l = pig_entity.CreateChild();
 	particle_parent_l.SetTransformation( particle_parent_l.GetLocalTransformation() 
 		* ASPX::Transformation::Rotate( 0.0f, 180.0f, 0.0f )
 		* ASPX::Transformation::Position( 1.1f, 0.2f, -2.2f ) );
@@ -137,7 +135,7 @@ void PigDustService::CreateParticleSystems( twm::IWorldUpdate* world )
 		_particle.push_back( new_particle_system );
 	}
 
-	twm::Entity particle_parent_rr = _pig_entity.CreateChild();
+	twm::Entity particle_parent_rr = pig_entity.CreateChild();
 	particle_parent_rr.SetTransformation( particle_parent_rr.GetLocalTransformation() 
 		* ASPX::Transformation::Rotate( 0.0f, 180.0f, 0.0f )
 		* ASPX::Transformation::Position( -1.1f, 0.2f, 2.2f ) );
@@ -148,7 +146,7 @@ void PigDustService::CreateParticleSystems( twm::IWorldUpdate* world )
 		_particle.push_back( new_particle_system );
 	}
 
-	twm::Entity particle_parent_rl = _pig_entity.CreateChild();
+	twm::Entity particle_parent_rl = pig_entity.CreateChild();
 	particle_parent_rl.SetTransformation( particle_parent_rl.GetLocalTransformation() 
 		* ASPX::Transformation::Rotate( 0.0f, 180.0f, 0.0f )
 		* ASPX::Transformation::Position( 1.1f, 0.2f, 2.2f ) );

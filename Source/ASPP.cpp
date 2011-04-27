@@ -7,7 +7,7 @@ namespace ASPX
 		CParticle::CParticle( void )
 		{
 			_next_index = 0;
-			_maximum_count = 5000;
+			_maximum_count = 2000;
 			_particle.resize( _maximum_count );
 			_active_particle_count = _maximum_count;
 			_initialised = false;
@@ -15,12 +15,12 @@ namespace ASPX
 
 			_lastBirthed = 0.0f;
 			_birthRate = 0.017f;
-			_particleLifeSpan = 8.0f;
+			_particleLifeSpan = 4.0f;
 			_particle_quantity = 16;
 
 			_end_range = 0;
 			_gravity = (float)(GRAVITY * 0.002f);
-			_wind = twm::Vector( -0.08f, 0.0f, 0.08f );
+			_wind = twm::Vector( -0.008f, 0.0f, 0.008f );
 		}
 
 		CParticle::~CParticle( void )
@@ -69,9 +69,9 @@ namespace ASPX
 
 					float scale = 1.0f - ( ( time - _particle[ i ].birthtime ) / _particle[ i ].lifeSpan );
 					if( scale < 0.0f ) scale = 0.0f; if( scale > 1.0f ) scale = 1.0f;
-					_particle[i].colour = twm::ColourAlpha( 1.0f, scale, scale, scale );
+					_particle[i].colour = twm::ColourAlpha( 1.0f, 1.0f, 1.0f, scale );
 
-					_particle[i].size = ( scale * 0.1f );
+					_particle[i].size = ( (1.2f - scale) * 0.5f );
 				}
 
 				// update TWM
@@ -122,21 +122,27 @@ namespace ASPX
 			}
 		}
 
-		void CParticle::CheckCollisions( float time, twm::Matrix pig_xform )
+		void CParticle::CheckCollisions( float time, twm::Entity* pig_entity )
 		{
 			float pig_radius = 5.0f;
+
+			WartPigComponent pig_data = pig_entity->GetComponent( kWartPig );
 	
 			for ( unsigned int i = 0; i < _end_range; i++ )
 			{
 				if( time - _particle[i].birthtime >= 0.25f )
 				{
-					twm::Vector relPos = ASPX::Transformation::getPosition( pig_xform ) - _particle[i].position;
+					twm::Vector relPos = ASPX::Transformation::getPosition( pig_entity->GetWorldTransformation() ) - _particle[i].position;
 					float dist = relPos.x * relPos.x + relPos.y * relPos.y + relPos.z * relPos.z;
 					float minDist = pig_radius + _particle[i].size;
 					if( dist <= (minDist * minDist) ) 
 					{
-						_particle[i].velocity += ASPX::Transformation::getDirection( pig_xform );
-						_particle[i].velocity.y += 0.5f;
+						twm::Vector dir = ASPX::Transformation::getDirection( pig_entity->GetWorldTransformation() );
+						dir.x *= (pig_data.GetSpeed() * 0.01f);
+						dir.y *= (pig_data.GetSpeed() * 0.01f);
+						dir.z *= (pig_data.GetSpeed() * 0.01f);
+						_particle[i].velocity += dir;
+						_particle[i].velocity.y += pig_data.GetSpeed() > 10.0f || pig_data.GetSpeed() < -10.0f ? 1.0f : 0.0f;
 					}
 				}
 			}
