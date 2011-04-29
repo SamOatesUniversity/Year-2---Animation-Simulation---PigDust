@@ -36,11 +36,7 @@ namespace ASPX
 			_point_sprites = base_entity.CreateComponent( twm::kPointSprites );
 
 			_point_sprites.SetSizes( 0.01f );
-#if _DEBUG
 			_point_sprites.SetTexture( "swirl.dds" );
-#else
-			_point_sprites.SetTexture( "swirl_red.dds" );
-#endif
 			_point_sprites.SetColours( twm::ColourAlpha( 1, 1, 1, 1 ) );
 			_point_sprites.SetBlendMode( twm::PointSprites::kBlendLerp );
 
