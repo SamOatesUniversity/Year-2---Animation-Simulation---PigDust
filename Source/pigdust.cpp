@@ -44,6 +44,8 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 	// compute the elapsed time in seconds since the service started
 	const float time = 0.001f * _timer.GetTime();
 	const float deltatime = 0.001f * _frame_timer.GetTime();
+	std::cout << "FPS : " << 1.0f / deltatime << "\n";
+
 	_frame_timer.Reset();
 
 	//pig_id is a counter used to work out which set of 4 wheels to use and
@@ -79,7 +81,7 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 			if( pig_acc != 0.0f && ( pig_speed < 10.0f && pig_speed > -10.0f ) )
 			{
 				_particle[i]->SetEnabled( true );
-				_particle[i]->_particle_quantity = 8;
+				_particle[i]->_particle_quantity = 4;
 			}
 			//decelorating
 			else if( pig_acc == 0.0f && ( pig_speed >= 1.0f || pig_speed <= -1.0f ) )
@@ -92,7 +94,7 @@ void PigDustService::DoFrame( twm::IWorldUpdate* world, twm::IMessageIterator* m
 			{
 				_particle[i]->SetEnabled( true );
 				float s = pig_data.GetSteeringAngle() < 0.0f ?  -pig_data.GetSteeringAngle() * 10.0f : pig_data.GetSteeringAngle() * 10.0f;
-				_particle[i]->_particle_quantity = (unsigned int)(4 + s);
+				_particle[i]->_particle_quantity = (unsigned int)(2 + (s*0.5f));
 			}	
 
 		}
